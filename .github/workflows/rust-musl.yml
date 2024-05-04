@@ -235,7 +235,7 @@ jobs:
       HAVE_DOCKERHUB_LOGIN: ${{ vars.DOCKERHUB_ENABLED == 'true' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
       HAVE_GHCR_LOGIN: ${{ vars.GHCR_ENABLED == 'true' && github.repository_owner != '' && secrets.GITHUB_TOKEN != '' }}
       HAVE_QUAY_LOGIN: ${{ vars.QUAY_ENABLED == 'true' && secrets.QUAY_USERNAME != '' && secrets.QUAY_TOKEN != '' }}
-    if: ${{ github.repository == 'BlackDex/rust-musl' }}
+    if: ${{ github.repository == 'dfunkt/rust-musl' }}
     strategy:
       # When using `act` only run 1 matrix, since this could use a lot of memory or cause other issues
       max-parallel: ${{ github.event.act && 1 || 4 }}
@@ -282,20 +282,20 @@ jobs:
         shell: bash
         run: |
             echo "base_tags_stable=" \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-${{ needs.build_vars.outputs.stable_version }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-stable," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-stable-${{ needs.build_vars.outputs.stable_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-${{ needs.build_vars.outputs.stable_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-stable," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-stable-${{ needs.build_vars.outputs.stable_version }}," \
             | tr -d ' ' | tee -a "${GITHUB_ENV}"
 
             echo "base_tags_stable_vw=" \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-${{ needs.build_vars.outputs.vaultwarden_version }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-stable-${{ needs.build_vars.outputs.vaultwarden_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-${{ needs.build_vars.outputs.vaultwarden_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-stable-${{ needs.build_vars.outputs.vaultwarden_version }}," \
             | tr -d ' ' | tee -a "${GITHUB_ENV}"
 
             echo "base_tags_nightly=" \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-nightly${{ needs.build_vars.outputs.nightly_tag_postfix }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.image_tag }}-nightly-${{ needs.build_vars.outputs.nightly_date }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-nightly${{ needs.build_vars.outputs.nightly_tag_postfix }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.image_tag }}-nightly-${{ needs.build_vars.outputs.nightly_date }}," \
             | tr -d ' ' | tee -a "${GITHUB_ENV}"
 
       - name: Login to DockerHub
@@ -365,7 +365,7 @@ jobs:
           #
           # Check if we are running this via act or not and determine the caching method
           if [[ -n "${ACT}" ]]; then
-            github_output "cache_from" "blackdex/rust-musl:${{ matrix.image_tag }}"
+            github_output "cache_from" "dfunkt/rust-musl:${{ matrix.image_tag }}"
             github_output "cache_to" ""
           else
             github_output "cache_from" "type=gha,scope=${{ matrix.image_tag }}"
@@ -393,7 +393,7 @@ jobs:
             ARCH_CPPFLAGS=${{ matrix.arch_cppflags }}
             RUST_CHANNEL=stable
             RUSTC_HASH=${{ needs.build_vars.outputs.stable_hash }}
-          tags: blackdex/rust-musl:${{ matrix.image_tag }}-test
+          tags: dfunkt/rust-musl:${{ matrix.image_tag }}-test
           cache-from: ${{ steps.docker_cache.outputs.cache_from }}
           cache-to: ${{ steps.docker_cache.outputs.cache_to }}
 
@@ -408,7 +408,7 @@ jobs:
             --tmpfs /home/rust/src/target:rw,exec,mode=1777 \
             -e RUST_BACKTRACE=1 \
             -e RUSTFLAGS="${{ matrix.xtra_rustflags }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.image_tag }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.image_tag }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ15) - Rust Current Stable
         # Skip during nightly builds
@@ -423,7 +423,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq15/lib" \
             -e RUSTFLAGS="${{ matrix.xtra_rustflags }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.image_tag }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.image_tag }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Docker Push - Rust Current Stable
         id: push_stable
@@ -451,7 +451,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_stable.outputs.digest != '' && env.HAVE_DOCKERHUB_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: docker.io/blackdex/rust-musl
+          subject-name: docker.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_stable.outputs.digest }}
           push-to-registry: true
 
@@ -459,7 +459,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_stable.outputs.digest != '' && env.HAVE_GHCR_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: ghcr.io/blackdex/rust-musl
+          subject-name: ghcr.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_stable.outputs.digest }}
           push-to-registry: true
 
@@ -467,7 +467,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_stable.outputs.digest != '' && env.HAVE_QUAY_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: quay.io/blackdex/rust-musl
+          subject-name: quay.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_stable.outputs.digest }}
           push-to-registry: true
 
@@ -490,7 +490,7 @@ jobs:
             OPENSSL_ARCH=${{ matrix.openssl_arch }}
             ARCH_CPPFLAGS=${{ matrix.arch_cppflags }}
             RUST_CHANNEL=${{ needs.build_vars.outputs.vaultwarden_version }}
-          tags: blackdex/rust-musl:${{ matrix.image_tag }}-vw-test
+          tags: dfunkt/rust-musl:${{ matrix.image_tag }}-vw-test
           cache-from: ${{ steps.docker_cache.outputs.cache_from }}
           cache-to: ${{ steps.docker_cache.outputs.cache_to }}
 
@@ -505,7 +505,7 @@ jobs:
             --tmpfs /home/rust/src/target:rw,exec,mode=1777 \
             -e RUST_BACKTRACE=1 \
             -e RUSTFLAGS="${{ matrix.xtra_rustflags }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.image_tag }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.image_tag }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ15) - Rust Vaultwarden Stable
         # Skip during nightly builds
@@ -520,7 +520,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq15/lib" \
             -e RUSTFLAGS="${{ matrix.xtra_rustflags }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.image_tag }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.image_tag }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Docker Push - Rust Vaultwarden Stable
         id: push_vw_stable
@@ -546,7 +546,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_vw_stable.outputs.digest != '' && env.HAVE_DOCKERHUB_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: docker.io/blackdex/rust-musl
+          subject-name: docker.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_vw_stable.outputs.digest }}
           push-to-registry: true
 
@@ -554,7 +554,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_vw_stable.outputs.digest != '' && env.HAVE_GHCR_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: ghcr.io/blackdex/rust-musl
+          subject-name: ghcr.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_vw_stable.outputs.digest }}
           push-to-registry: true
 
@@ -562,7 +562,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_vw_stable.outputs.digest != '' && env.HAVE_QUAY_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: quay.io/blackdex/rust-musl
+          subject-name: quay.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_vw_stable.outputs.digest }}
           push-to-registry: true
 
@@ -583,7 +583,7 @@ jobs:
             OPENSSL_ARCH=${{ matrix.openssl_arch }}
             ARCH_CPPFLAGS=${{ matrix.arch_cppflags }}
             RUST_CHANNEL=nightly-${{ needs.build_vars.outputs.nightly_date }}
-          tags: blackdex/rust-musl:${{ matrix.image_tag }}-nightly-test
+          tags: dfunkt/rust-musl:${{ matrix.image_tag }}-nightly-test
           cache-from: ${{ steps.docker_cache.outputs.cache_from }}
           cache-to: ${{ steps.docker_cache.outputs.cache_to }}
 
@@ -596,7 +596,7 @@ jobs:
             --tmpfs /home/rust/src/target:rw,exec,mode=1777 \
             -e RUST_BACKTRACE=1 \
             -e RUSTFLAGS="${{ matrix.xtra_rustflags }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.image_tag }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.image_tag }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ15) - Rust Nightly
         # continue-on-error: true
@@ -609,7 +609,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq15/lib" \
             -e RUSTFLAGS="${{ matrix.xtra_rustflags }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.image_tag }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.image_tag }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Docker Push - Rust Nightly
         id: push_nightly
@@ -633,7 +633,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_nightly.outputs.digest != '' && env.HAVE_DOCKERHUB_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: docker.io/blackdex/rust-musl
+          subject-name: docker.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_nightly.outputs.digest }}
           push-to-registry: true
 
@@ -641,7 +641,7 @@ jobs:
         if : ${{ !github.event.act && steps.push_nightly.outputs.digest != '' && env.HAVE_GHCR_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: ghcr.io/blackdex/rust-musl
+          subject-name: ghcr.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_nightly.outputs.digest }}
           push-to-registry: true
 
@@ -649,6 +649,6 @@ jobs:
         if : ${{ !github.event.act && steps.push_nightly.outputs.digest != '' && env.HAVE_QUAY_LOGIN == 'true' }}
         uses: actions/attest-build-provenance@7668571508540a607bdfd90a87a560489fe372eb # v2.1.0
         with:
-          subject-name: quay.io/blackdex/rust-musl
+          subject-name: quay.io/dfunkt/rust-musl
           subject-digest: ${{ steps.push_nightly.outputs.digest }}
           push-to-registry: true
