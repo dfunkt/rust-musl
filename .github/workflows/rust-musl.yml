@@ -218,9 +218,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HAVE_DOCKERHUB_LOGIN: ${{ vars.DOCKERHUB_ENABLED == 'true' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-      HAVE_GHCR_LOGIN: ${{ vars.GHCR_ENABLED == 'true' && github.repository_owner != '' && secrets.GITHUB_TOKEN != '' }}
+      HAVE_GHCR_LOGIN: ${{ github.repository_owner != '' && secrets.GITHUB_TOKEN != '' }}
       HAVE_QUAY_LOGIN: ${{ vars.QUAY_ENABLED == 'true' && secrets.QUAY_USERNAME != '' && secrets.QUAY_TOKEN != '' }}
-    if: ${{ github.repository == 'BlackDex/rust-musl' }}
+    if: ${{ github.repository == 'dfunkt/rust-musl' }}
     strategy:
       # max-parallel: 1 # Use this when using `act`, since this could use a lot of memory or cause other issues
       fail-fast: false
@@ -267,20 +267,20 @@ jobs:
         shell: bash
         run: |
             echo "base_tags_stable=" \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-${{ needs.build_vars.outputs.stable_version }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-stable," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-stable-${{ needs.build_vars.outputs.stable_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-${{ needs.build_vars.outputs.stable_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-stable," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-stable-${{ needs.build_vars.outputs.stable_version }}," \
             | tr -d ' ' | tee -a "${GITHUB_ENV}"
 
             echo "base_tags_stable_vw=" \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-${{ needs.build_vars.outputs.vaultwarden_version }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-stable-${{ needs.build_vars.outputs.vaultwarden_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-${{ needs.build_vars.outputs.vaultwarden_version }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-stable-${{ needs.build_vars.outputs.vaultwarden_version }}," \
             | tr -d ' ' | tee -a "${GITHUB_ENV}"
 
             echo "base_tags_nightly=" \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly${{ needs.build_vars.outputs.nightly_tag_postfix }}," \
-            "@RGSTRY@blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-${{ needs.build_vars.outputs.nightly_date }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly${{ needs.build_vars.outputs.nightly_tag_postfix }}," \
+            "@RGSTRY@dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-${{ needs.build_vars.outputs.nightly_date }}," \
             | tr -d ' ' | tee -a "${GITHUB_ENV}"
 
       - name: Login to DockerHub
@@ -350,7 +350,7 @@ jobs:
           #
           # Check if we are running this via act or not and determine the caching method
           if [[ -n "${ACT}" ]]; then
-            github_output "cache_from" "blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}"
+            github_output "cache_from" "dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}"
             github_output "cache_to" ""
           else
             github_output "cache_from" "type=gha,scope=${{ matrix.env.IMAGE_TAG }}"
@@ -378,7 +378,7 @@ jobs:
             ARCH_CPPFLAGS=${{ matrix.env.ARCH_CPPFLAGS }}
             RUST_CHANNEL=stable
             RUSTC_HASH=${{ needs.build_vars.outputs.stable_hash }}
-          tags: blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-test
+          tags: dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-test
           cache-from: ${{ steps.docker_cache.outputs.cache_from }}
           cache-to: ${{ steps.docker_cache.outputs.cache_to }}
 
@@ -393,7 +393,7 @@ jobs:
             --tmpfs /home/rust/src/target:rw,exec,mode=1777 \
             -e RUST_BACKTRACE=1 \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ15) - Rust Current Stable
         # Skip during nightly builds
@@ -408,7 +408,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq15/lib" \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ11) - Rust Current Stable
         # Skip during nightly builds
@@ -423,7 +423,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq11/lib" \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Docker Push - Rust Current Stable
         # Skip during nightly builds
@@ -465,7 +465,7 @@ jobs:
             OPENSSL_ARCH=${{ matrix.env.OPENSSL_ARCH }}
             ARCH_CPPFLAGS=${{ matrix.env.ARCH_CPPFLAGS }}
             RUST_CHANNEL=${{ needs.build_vars.outputs.vaultwarden_version }}
-          tags: blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test
+          tags: dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test
           cache-from: ${{ steps.docker_cache.outputs.cache_from }}
           cache-to: ${{ steps.docker_cache.outputs.cache_to }}
 
@@ -480,7 +480,7 @@ jobs:
             --tmpfs /home/rust/src/target:rw,exec,mode=1777 \
             -e RUST_BACKTRACE=1 \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ15) - Rust Vaultwarden Stable
         # Skip during nightly builds
@@ -495,7 +495,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq15/lib" \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ11) - Rust Vaultwarden Stable
         # Skip during nightly builds
@@ -510,7 +510,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq11/lib" \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-vw-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Docker Push - Rust Vaultwarden Stable
         # Skip during nightly builds
@@ -549,7 +549,7 @@ jobs:
             OPENSSL_ARCH=${{ matrix.env.OPENSSL_ARCH }}
             ARCH_CPPFLAGS=${{ matrix.env.ARCH_CPPFLAGS }}
             RUST_CHANNEL=nightly-${{ needs.build_vars.outputs.nightly_date }}
-          tags: blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test
+          tags: dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test
           cache-from: ${{ steps.docker_cache.outputs.cache_from }}
           cache-to: ${{ steps.docker_cache.outputs.cache_to }}
 
@@ -562,7 +562,7 @@ jobs:
             --tmpfs /home/rust/src/target:rw,exec,mode=1777 \
             -e RUST_BACKTRACE=1 \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ15) - Rust Nightly
         # continue-on-error: true
@@ -575,7 +575,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq15/lib" \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Test Docker Image (PQ11) - Rust Nightly
         # continue-on-error: true
@@ -588,7 +588,7 @@ jobs:
             -e RUST_BACKTRACE=1 \
             -e PQ_LIB_DIR="/usr/local/musl/pq11/lib" \
             -e RUSTFLAGS="${{ matrix.env.XTRA_RUSTFLAGS }}-Clink-arg=-s" \
-            blackdex/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
+            dfunkt/rust-musl:${{ matrix.env.IMAGE_TAG }}-nightly-test bash -c 'rm -vf Cargo.lock ; cargo -Vv ; rustc -Vv ; cargo update ; cargo build --release'
 
       - name: Docker Push - Rust Nightly
         uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
