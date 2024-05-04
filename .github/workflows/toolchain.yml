@@ -20,7 +20,7 @@ jobs:
   # ###
   # Generate variables used by other jobs
   tbuild_vars:
-    if: ${{ github.repository == 'BlackDex/rust-musl' }}
+    if: ${{ github.repository == 'dfunkt/rust-musl' }}
     name: Generate Build Variables
     runs-on: ubuntu-24.04
     env:
@@ -68,7 +68,7 @@ jobs:
   # ###
   # Building Toolchain
   toolchain:
-    if: ${{ github.repository == 'BlackDex/rust-musl' }}
+    if: ${{ github.repository == 'dfunkt/rust-musl' }}
     name: Build Toolchain - ${{ matrix.image_tag }} - ${{ matrix.os }}
     needs:
       - tbuild_vars
@@ -184,8 +184,8 @@ jobs:
           tags=""
           for registry in ${REGISTRIES}; do
             echo "Generating tags for ${registry}:"
-            tags="${tags:+${tags},}${registry}/blackdex/musl-toolchain:${ARCH_TYPE}${IMAGE_TAG}"
-            tags="${tags:+${tags},}${registry}/blackdex/musl-toolchain:${ARCH_TYPE}${IMAGE_TAG}${TAG_DATE}"
+            tags="${tags:+${tags},}${registry}/dfunkt/musl-toolchain:${ARCH_TYPE}${IMAGE_TAG}"
+            tags="${tags:+${tags},}${registry}/dfunkt/musl-toolchain:${ARCH_TYPE}${IMAGE_TAG}${TAG_DATE}"
           done
 
           if [[ "${tags}" = "" ]]; then
@@ -219,7 +219,7 @@ jobs:
   # Merge the separate build amd64 and arm64 builds into one
   # https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
   toolchain_merge:
-    if: ${{ github.repository == 'BlackDex/rust-musl' }}
+    if: ${{ github.repository == 'dfunkt/rust-musl' }}
     name: Merge Toolchain Container
     runs-on: ubuntu-24.04
     permissions:
@@ -302,10 +302,10 @@ jobs:
           for registry in ${REGISTRIES}; do
             echo "Generating manifest for ${registry}:"
             docker buildx imagetools create \
-              -t ${registry}/blackdex/musl-toolchain:${IMAGE_TAG} \
-              -t ${registry}/blackdex/musl-toolchain:${IMAGE_TAG}${TAG_DATE} \
-              ${registry}/blackdex/musl-toolchain:amd64-${IMAGE_TAG}${TAG_DATE} \
-              ${registry}/blackdex/musl-toolchain:arm64-${IMAGE_TAG}${TAG_DATE}
+              -t ${registry}/dfunkt/musl-toolchain:${IMAGE_TAG} \
+              -t ${registry}/dfunkt/musl-toolchain:${IMAGE_TAG}${TAG_DATE} \
+              ${registry}/dfunkt/musl-toolchain:amd64-${IMAGE_TAG}${TAG_DATE} \
+              ${registry}/dfunkt/musl-toolchain:arm64-${IMAGE_TAG}${TAG_DATE}
           done
 
       - name: Inspect manifests for amd64/arm64
@@ -317,5 +317,5 @@ jobs:
           tags=""
           for registry in ${REGISTRIES}; do
             echo "Inspecting manifest for ${registry}:"
-            docker buildx imagetools inspect ${registry}/blackdex/musl-toolchain:${IMAGE_TAG}
+            docker buildx imagetools inspect ${registry}/dfunkt/musl-toolchain:${IMAGE_TAG}
           done
