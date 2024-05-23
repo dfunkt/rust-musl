@@ -21,8 +21,8 @@ on:
         required: false
         default: ""
 
-  schedule:
-    - cron: '30 9 * * *' # everyday at 09:30 UTC
+#  schedule:
+#    - cron: '30 9 * * *' # everyday at 09:30 UTC
 
 ## ##
 ## To trigger this workflow using `act` (https://github.com/nektos/act) you can do the following.
